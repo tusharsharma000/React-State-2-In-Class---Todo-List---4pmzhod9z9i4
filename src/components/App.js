@@ -1,67 +1,121 @@
 import React, { useState } from "react";
 import "./../styles/App.css";
 
+function ListItem(props) {
+  const { children, onModify, onDelete } = props;
+
+  const [isEditMode, setIsEditMode] = useState(false);
+  console.log({ isEditMode });
+  const [tempTask, setTempTask] = useState(children);
+
+  return isEditMode ? (
+    <>
+      <textarea
+        className="editTask"
+        onChange={function (event) {
+          setTempTask(event.target.value);
+        }}
+        value={tempTask}
+      ></textarea>
+      <button
+        className="saveTask"
+        type="button"
+        disabled={tempTask === ""}
+        onClick={function () {
+          console.log("save click", tempTask);
+          if (tempTask !== "") {
+            onModify(tempTask);
+            setIsEditMode(false);
+          }
+        }}
+      >
+        Save
+      </button>
+    </>
+  ) : (
+    <>
+      <li className="list" key={children}>
+        {children}
+      </li>
+      <button
+        className="edit"
+        type="button"
+        onClick={function () {
+          setIsEditMode(true);
+        }}
+      >
+        Edit
+      </button>
+      <button
+        className="delete"
+        type="button"
+        onClick={function () {
+          onDelete();
+        }}
+      >
+        Delete
+      </button>
+    </>
+  );
+}
+
 function App() {
-  const [inputs, setInputs] = useState("");
-	const [items, setItems] = useState([]);
-	const [toggle, setToggle] = useState(true);
-	const [isEditItem , setIsEditItem] = useState(null);
+  const [task, setTask] = useState("");
+  const [todoList, setTodoList] = useState([]);
 
-
-  const heandlechange = (e) => {
-    setInputs(e.target.value);
-  };
-  const additem = () => {
-    if (!inputs) {
-
-		} 
-		else if(inputs && !toggle){
-     setItems(items.map((elem)=>{
-     if(elem.id === isEditItem){
-			 return {...elem,name:inputs}
-		 }
-		 return elem;
-		 }))
-		 setToggle(true);
-			setInputs('');
-			setIsEditItem(null);
-		}
-		else {
-      const allitems = { id: new Date().getTime().toString(), name: inputs };
-      setItems([...items, allitems]);
-      setInputs("");
-    }
-  };
-
-  const del = (index) => {
-    const updateditem = items.filter((elem) => {
-      return index !== elem.id;
+  function onModify(givenTask, givenI) {
+    console.log({ givenTask, givenI });
+    const newList = todoList.map(function (task, i) {
+      if (givenI === i) {
+        return givenTask;
+      }
+      return task;
     });
-	};
-	
-	const edit= (id)=>{
-      let newedititem = items.find((elem)=>{
-        return elem.id ===id;
-			})
-			setToggle(false);
-			setInputs(newedititem.name);
-			setIsEditItem(id);
-	}
+    // console.log(newList === todoList);
+    setTodoList(newList);
+  }
+
+  function onDelete(givenI) {
+    const newList = todoList.filter(function (el, i) {
+      return i !== givenI;
+    });
+    setTodoList(newList);
+  }
 
   return (
     <div id="main">
-      <textarea id="task" value={inputs} onChange={heandlechange} />
-      <button id="btn" onClick={additem}>
+      <textarea
+        id="task"
+        onChange={function (event) {
+          setTask(event.target.value);
+        }}
+        value={task}
+      ></textarea>
+      <button
+        id="btn"
+        type="button"
+        onClick={function () {
+          if (task !== "") {
+            setTodoList([...todoList, task]);
+            setTask("");
+          }
+        }}
+      >
         Add
       </button>
+
+      <h3>Todo Lists</h3>
       <ul>
-        {items.map((elem) => {
+        {todoList.map((task, i) => {
           return (
-            <li className="list" key={elem.id}>
-              {elem.name}
-            </li>
-            <button onClick={()=>(del(elem.id)}>Delete</button>
-						<button onClick={()=>edit(elem.id)}>Edit</button>
+            <ListItem
+              onModify={(newTask) => {
+                onModify(newTask, i);
+              }}
+              onDelete={() => onDelete(i)}
+            >
+              {task}
+            </ListItem>
           );
         })}
       </ul>
